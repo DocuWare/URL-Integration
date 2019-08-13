@@ -4,41 +4,38 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-public class EncryptedDownload 
-{
+public class EncryptedDownload {
 	private static String passphrase = "DI4a2nR2K0pw0zGcz+3CoA=="; // Passphrase encoded base64
+	private static final String server = "https://petersengineering.docuware.cloud";
 	
     private	static String parameters;
     
     private static Cipher ci = null;
     private static byte[] passphraseSHA512 = null;
 	
-	private static byte[] iv;
+	private static byte[] iv; 
 	private static byte[] passphrase_byte;
-
+	
     private static String passphraseSub;
     private static String ivSub;
     
-    public static void main(String[] args) throws Exception 
-    {
+    public static void main(String[] args) throws Exception {
     	Init();
     	SecretKeySpec sks = Get_Passphrase();
     	IvParameterSpec ivps = Get_IV();
-		Init_Cypher(sks, ivps);
+		String cipherText = Get_CipherString(sks, ivps);
+		String url = Get_URL(cipherText);
 	}
  
-    private static IvParameterSpec Get_IV()
-    {
+    private static IvParameterSpec Get_IV() {
     	return new IvParameterSpec(iv);
     }
     
-    private static SecretKeySpec Get_Passphrase() throws Exception
-    {  	
+    private static SecretKeySpec Get_Passphrase() throws Exception {  	
     	return new SecretKeySpec(passphrase_byte, "AES");
     }
     
-    private static void Init() throws Exception
-    {
+    private static void Init() throws Exception {
 		ci = Cipher.getInstance("AES/CBC/PKCS5Padding");
     	MessageDigest md = MessageDigest.getInstance("SHA-512");
     	md.reset();
@@ -47,7 +44,7 @@ public class EncryptedDownload
 		//Replace this part with your preferred Bas64 decoder. java.util.Base64 exist in java since version 1.8
 		byte [] plainPassphrase = java.util.Base64.getDecoder().decode(passphrase);
 
-		System.out.println("Plain" + new String(plainPassphrase));
+		System.out.println("Plain passphrase: " + new String(plainPassphrase));
 
 		passphraseSHA512 = md.digest(plainPassphrase);
 		
@@ -68,25 +65,32 @@ public class EncryptedDownload
 
 		String searchDialog = "38c19319-c3ae-4ed2-ab98-81122eb0a4d7";
 		
-    	parameters = "p=" + integrationElement + "&lc=" + dwLogin + "&fc=" + fileCabinet +"&q=" + query + "&dt=" + downloadType + "&sed=" + searchDialog; 
+		parameters = "p=" + integrationElement + "&lc=" + dwLogin + "&fc=" + fileCabinet +"&q=" + query + "&dt=" + downloadType + "&sed=" + searchDialog; 
+		
+		System.out.println("Parameter: " + parameters);
       }
     
-    private static void Init_Cypher(SecretKeySpec sks, IvParameterSpec ivps) throws Exception
-    {
-    	ci.init(Cipher.ENCRYPT_MODE, sks, ivps);
-		System.out.println(parameters);
+    private static String Get_CipherString(SecretKeySpec sks, IvParameterSpec ivps) throws Exception {
+		ci.init(Cipher.ENCRYPT_MODE, sks, ivps);
 
-    	byte[] ciphertext = ci.doFinal(parameters.getBytes("UTF-8"));
+    	byte[] cipherByteArray = ci.doFinal(parameters.getBytes("UTF-8"));
 		
-		System.out.println(ciphertext);
+		System.out.println("CipherByteArray: " + cipherByteArray);
 
-		String server = "https://petersengineering.docuware.cloud";
-		//Encode ciphertext to Base64URL
-		String encodedCiphertext = UrlTokenEncode(ciphertext)
-    	String url = server + "/DocuWare/Platform/WebClient/1/Integration?ep=" + encodedCiphertext;
+		String encodedCiphertext = UrlTokenEncode(cipherByteArray);
+
+		System.out.println("EncodedCiphertext: " + encodedCiphertext);
+
+		return encodedCiphertext;
+	}
+	
+	private static String Get_URL(String cipherText) {
+		String url = server + "/DocuWare/Platform/WebClient/1/Integration?ep=" + cipherText;
 		
-		System.out.println(url);
-    }
+		System.out.println("URL " + url);
+
+		return url;
+	}
    
 	//https://www.oipapio.com/question-5674514
 	public static String UrlTokenEncode(byte[] input) {
