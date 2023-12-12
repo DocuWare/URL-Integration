@@ -91,7 +91,8 @@ public class EncryptedDownload {
 
 		return url;
 	}
-   
+
+	// This is representing the functionality from .Net https://referencesource.microsoft.com/#system.web/Util/HttpEncoder.cs,0e3cb83cf51ca334
 	public static String UrlTokenEncode(byte[] input) {
 		try {
 			if (input == null) {
