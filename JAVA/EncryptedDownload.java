@@ -92,7 +92,6 @@ public class EncryptedDownload {
 		return url;
 	}
    
-	//https://www.oipapio.com/question-5674514
 	public static String UrlTokenEncode(byte[] input) {
 		try {
 			if (input == null) {
